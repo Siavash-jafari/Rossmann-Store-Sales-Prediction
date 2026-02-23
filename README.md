@@ -90,14 +90,7 @@ Displayed business metrics include:
 - Matplotlib  
 - Seaborn  
 - Microsoft Power BI  
-
-## Future Improvements
-
-- Hyperparameter optimization  
-- Ensemble forecasting models  
-- Deep learning-based forecasting approaches  
-- Uncertainty estimation for predictions  
-- Extended forecasting horizons  
+  
 
 ## Conclusion
 
