@@ -59,7 +59,7 @@ Performance was measured using Root Mean Squared Error (RMSE).
 
 Validation RMSE was approximately 716.
 
-Residual distribution and prediction visualization were analyzed.
+Prediction visualization were analyzed.
 
 ## Forecasting Output
 
