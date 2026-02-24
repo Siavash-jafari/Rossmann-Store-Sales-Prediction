@@ -3,134 +3,79 @@
 ## Project Overview
 
 This project implements an end-to-end machine learning solution for retail sales forecasting using the Rossmann store dataset from Kaggle.  
-The objective is to predict future daily store sales over a forecasting horizon of approximately six weeks and to provide actionable business insights via model-based predictions and an interactive dashboard.
+The goal is to predict daily store sales for a six-week horizon and provide business insights through an interactive dashboard.
 
-## Project Objectives
+## Objectives
 
-- Data preprocessing and cleaning of store and sales data  
-- Handling missing values using logical, business-meaningful placeholder encodings  
-- Feature engineering for temporal, promotion, competition, and customer-demand related variables  
-- Building and tuning a gradient boosting regression model (LightGBM)  
-- Time-aware model evaluation using a hold-out validation period  
-- Generating aligned test-set predictions for all stores  
-- Creating a Power BI dashboard dataset for business visualization  
+- Clean and preprocess historical sales and store data  
+- Model business-relevant missing values instead of dropping data  
+- Engineer temporal, promotion, competition, and customer-demand features  
+- Train a gradient boosting model for sales forecasting  
+- Evaluate performance on a time-based validation set  
+- Generate future sales predictions for all stores  
+- Build a Power BI dashboard for business users  
 
-## Methodology
+## Data and Feature Engineering
 
-### Data Preprocessing
+Key steps:
 
-- Sales (`train`) and store metadata (`store`) datasets are merged on `Store` to create a unified modeling table.  
-- The `Date` column is converted to a datetime type and decomposed into several temporal features: `Year`, `Month`, ISO `Week`, `DayOfYear`, and a weekend flag `IsWeekend` based on `DayOfWeek`.  
-- Store-level competition timing is converted into a continuous `CompetitionDuration` (months since competition opened), using the difference between each observation date and a derived `CompetitionStartDate` and clipping negative values to zero.  
-- Categorical attributes (e.g., `StoreType`, `Assortment`, promotion interval fields) are kept as categories and later one-hot encoded.  
-- Missing values in competition and promotion timing variables are encoded via indicator flags (e.g., `CompetitionOpenSinceMonthmissing`, `Promo2SinceYearmissing`, `PromoIntervalmissing`) instead of dropping rows.
+- Merging store metadata into the sales data on `Store`  
+- Extracting calendar features from `Date` (year, month, week, day of year, weekend flag)  
+- Modeling competition using a continuous **competition duration** feature (months since the competitor opened)  
+- Encoding promotion information, including ongoing promo campaigns and their timing  
+- Creating a demand proxy feature **`ExpectedCustomers`**, computed as the average number of customers per store and weekday, and set to zero for closed days  
 
-### ExpectedCustomers Feature Engineering
+Missing competition and promotion information is represented with explicit indicator flags, so the model can learn the effect of unknown values rather than losing those rows.
 
-Because the Kaggle test set does not include actual daily customer counts, a proxy demand signal called **ExpectedCustomers** is engineered from the training data.
+## Modeling Approach
 
-- Compute the average number of customers by `Store` and `DayOfWeek` on the training set:  
-  `storedowavg = train_df.groupby(["Store", "DayOfWeek"])["Customers"].mean()`.  
-- Merge these averages back into both train/validation and test data as `ExpectedCustomers`.  
-- For days when a store is closed (`Open == 0`), `ExpectedCustomers` is set to 0 to reflect no customer traffic.
+- Algorithm: LightGBM regression (gradient boosting)  
+- Target: daily store `Sales`  
+- Input features: store identifiers, temporal features, promo and competition variables, missingness indicators, and `ExpectedCustomers`  
 
-This feature carries store- and weekday-specific demand intensity into both validation and test sets without using unavailable test customers.
+To respect the time structure and avoid leakage, the dataset is split chronologically:
 
-### Handling Missing Values and Encodings
+- Training period: 2013‑01‑01 to 2015‑06‑18  
+- Validation period: 2015‑06‑19 to 2015‑07‑31  
 
-- Competition and promotion timing missingness is represented through dedicated binary indicators, allowing the model to learn effects of “unknown” versus “known” business configurations.  
-- Original competition timing fields (`CompetitionOpenSinceYear`, `CompetitionOpenSinceMonth`, `CompetitionStartDate`) are dropped from the test set after constructing `CompetitionDuration` and indicator columns, keeping the feature space consistent with training.  
-- Categorical variables are one-hot encoded using `pd.get_dummies(..., drop_first=True)` applied consistently to train, validation, and test features.  
-- After encoding, feature matrices (`X_train`, `X_val`, `X_test`) are aligned so they share identical column names and order, filling any missing columns in the test set with zeros.  
-- Special characters are removed from feature names to ensure model compatibility (for example by stripping non-alphanumeric characters from column labels).
+The model is evaluated using Root Mean Squared Error (RMSE) on the validation period and achieves a validation RMSE of approximately **1028.08**.  
+After evaluation, the model is retrained on the full history (train + validation) before forecasting the test period.
 
-## Machine Learning Model
+## Forecasting Pipeline
 
-A **LightGBM regression model** (gradient boosting ensemble) is used to predict continuous daily sales per store.
+For the Kaggle test set, the same preprocessing and feature engineering steps are applied:
 
-Key configuration:
+- Merge store information and derive the same calendar, competition, promotion, and `ExpectedCustomers` features  
+- Apply the trained LightGBM model to predict daily sales for each store and date  
 
-- Algorithm: `LGBMRegressor`  
-- Number of estimators: 500  
-- Learning rate: 0.05  
-- Max depth: -1 (no explicit maximum depth)  
-- Number of leaves: 31  
-- Subsample: 0.8  
-- Column subsample by tree: 0.8  
-- Random state: 42  
+Predictions are exported as:
 
-Targets and features:
+- `prediction.csv`: contains `Id` and predicted `Sales` for submission or further analysis  
 
-- Target variable: `Sales`  
-- Dropped from features: `Sales`, `Date`, and `Customers`, ensuring only features available at prediction time are used  
-- Final feature set includes store identifiers, operational flags, temporal variables, competition structure, promotion flags and durations, missingness indicators, and the engineered `ExpectedCustomers` feature  
+## Dashboard Dataset and Power BI
 
-## Time-Based Validation Strategy
+To support business analysis, a dedicated dataset is prepared for visualization tools:
 
-To respect temporal ordering and avoid data leakage, a time-based split is used.
+- The dashboard dataset includes:  
+  - `Store`, `Open`, `Promo`, `StoreType`, `Assortment`  
+  - `ExpectedCustomers`, `CompetitionDuration`, and `PredictedSales`  
 
-- The last six weeks of available historical data (from 2015‑06‑19 to 2015‑07‑31) form the **validation set**.  
-- All earlier dates (from 2013‑01‑01 up to 2015‑06‑18) form the **training set**.  
+This dataset is exported as `dashboarddata.csv` and used in a Microsoft Power BI dashboard that provides:
 
-This simulates a realistic forecasting scenario where the model is trained on past data and evaluated on a future hold-out period.
-
-## Model Evaluation
-
-Evaluation metric:
-
-- Root Mean Squared Error (RMSE) on the validation period  
-
-Observed result:
-
-- The LightGBM model trained on the time-based split achieved a **validation RMSE of approximately 1028.08**.  
-
-After validation, the training and validation sets are concatenated into a **final training dataset**, and LightGBM is retrained on this full history to maximize the information used before generating test predictions.
-
-## Forecasting and Test Predictions
-
-Forecasting pipeline on the Kaggle test set:
-
-- Merge store metadata into the test set and compute the same temporal features as in training (year, month, week, day of year, weekend flag).  
-- Compute `CompetitionDuration` in months for each test date, using the same logic as the training data and clipping negative values to zero.  
-- Add `ExpectedCustomers` to the test data by merging the precomputed store–weekday averages and setting it to 0 when `Open == 0`.  
-- Apply the same preprocessing: missingness indicators, categorical encodings with `get_dummies`, feature name cleaning, and column alignment with the training feature matrix.  
-- Predict daily sales for each row using the retrained LightGBM model, yielding `y_test_pred`.  
-
-The predictions are stored as:
-
-- A submission-style file `prediction.csv` containing `Id` (store identifier used as ID) and `Sales` (predicted sales).
-
-## Dashboard Dataset and Visualization
-
-For business users, a dedicated dataset is exported for Power BI visualization.
-
-- A `dashboarddf` DataFrame is created from the test data, including:  
-  - `Store`  
-  - `Open`  
-  - `Promo`  
-  - `StoreType`  
-  - `Assortment`  
-  - `ExpectedCustomers`  
-  - `CompetitionDuration`  
-  - `PredictedSales` (from `y_test_pred`)  
-- This dataset is saved as `dashboarddata.csv` for import into Microsoft Power BI.
-
-The Power BI dashboard can display:
-
-- Predicted sales trends over time at store and chain level  
-- Comparisons across different store types and assortments  
-- Visual analysis of promotion impact using `Promo` and `ExpectedCustomers`  
-- Key performance indicators such as total predicted sales, average predicted sales, and number of active (open) stores over the forecast horizon  
+- Predicted sales trends over time  
+- Comparisons across store types and assortments  
+- Visualization of promotion impact on forecasted sales  
+- KPIs such as total and average forecasted sales, and number of active stores  
 
 ## Technologies Used
 
-- **Python**, Jupyter Notebook  
-- **Pandas**, NumPy for data manipulation  
-- **Scikit-learn** for preprocessing and evaluation utilities  
-- **LightGBM** (`LGBMRegressor`) for gradient boosting regression  
-- **Matplotlib**, Seaborn for exploratory data analysis and visualization  
-- **Microsoft Power BI** for building the interactive forecasting dashboard  
+- Python, Jupyter Notebook  
+- Pandas, NumPy  
+- Scikit-learn  
+- LightGBM  
+- Matplotlib, Seaborn  
+- Microsoft Power BI  
 
 ## Conclusion
 
-This project demonstrates a **complete machine learning pipeline** for retail sales forecasting on the Rossmann dataset, from raw data preprocessing and robust feature engineering (including the `ExpectedCustomers` demand proxy) through time-based validation, gradient-boosted modeling with LightGBM, generation of aligned test predictions, and preparation of a Power BI-ready dashboard dataset for business insight and decision support.
+The project demonstrates a complete machine learning pipeline for retail sales forecasting on the Rossmann dataset, from data preparation and feature engineering through time-aware model training and evaluation, to producing forecasts and a dashboard-ready dataset for business decision-making.
