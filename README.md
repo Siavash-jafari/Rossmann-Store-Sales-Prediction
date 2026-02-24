@@ -54,18 +54,18 @@ Predictions are exported as:
 
 ## Dashboard Dataset and Power BI
 
-To support business analysis, a dedicated dataset is prepared for visualization tools:
+A separate dashboard dataset is created from the test predictions:
 
-- The dashboard dataset includes:  
-  - `Store`, `Open`, `Promo`, `StoreType`, `Assortment`  
-  - `ExpectedCustomers`, `CompetitionDuration`, and `PredictedSales`  
+- `Store`, `Date`, `Open`, `Promo`, `StoreType`, `Assortment`  
+- `ExpectedCustomers`, `CompetitionDuration`, `PredictedSales`
 
-This dataset is exported as `dashboarddata.csv` and used in a Microsoft Power BI dashboard that provides:
+This dataset is exported as `dashboard_data.csv` and visualized in Microsoft Power BI.  
+The dashboard highlights:
 
-- Predicted sales trends over time  
-- Comparisons across store types and assortments  
-- Visualization of promotion impact on forecasted sales  
-- KPIs such as total and average forecasted sales, and number of active stores  
+- Key KPIs (total and average predicted sales, number of active stores)  
+- Predicted sales trends over time, broken down by store type  
+- Promo impact on predicted sales  
+- “Efficiency” views such as sales per expected customer by store type, promo status, and top stores
 
 ## Technologies Used
 
