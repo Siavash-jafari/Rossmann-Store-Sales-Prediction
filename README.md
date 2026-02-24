@@ -50,6 +50,9 @@ The objective was to predict continuous sales values.
 
 ## Model Evaluation
 
+The dataset was split based on time.  
+Training data included observations up to **01.01.2015**, and later dates were used as validation data to preserve the time-series structure and avoid data leakage.
+
 The model was evaluated using a hold-out validation dataset.
 
 Performance was measured using Root Mean Squared Error (RMSE).
@@ -90,7 +93,6 @@ Displayed business metrics include:
 - Matplotlib  
 - Seaborn  
 - Microsoft Power BI  
-  
 
 ## Conclusion
 
