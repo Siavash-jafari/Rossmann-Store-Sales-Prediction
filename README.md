@@ -51,9 +51,9 @@ The objective was to predict continuous sales values.
 ## Model Evaluation
 
 The dataset was split based on time.  
-Training data included observations up to **01.01.2015**, and later dates were used as validation data to preserve the time-series structure and avoid data leakage.
+The last six weeks of historical data were used as the validation set, while earlier observations were used for training. This approach preserves the temporal structure of the data and prevents data leakage.
 
-The model was evaluated using a hold-out validation dataset.
+The model was evaluated using this hold-out validation dataset.
 
 Performance was measured using Root Mean Squared Error (RMSE).
 
