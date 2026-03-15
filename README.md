@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project implements an end-to-end machine learning solution for retail sales forecasting using the Rossmann store dataset from Kaggle.  
+This project implements an end-to-end machine learning solution for retail sales forecasting using the [Rossmann Store Sales dataset](https://www.kaggle.com/competitions/rossmann-store-sales/data) from Kaggle.  
 The goal is to predict daily store sales for a six-week horizon and provide business insights through an interactive dashboard.
 
 ## Objectives
@@ -26,6 +26,8 @@ Key steps:
 - Creating a demand proxy feature **`ExpectedCustomers`**, computed as the average number of customers per store and weekday, and set to zero for closed days  
 
 Missing competition and promotion information is represented with explicit indicator flags, so the model can learn the effect of unknown values rather than losing those rows.
+
+**Dataset:** Download the Kaggle dataset [here](https://www.kaggle.com/competitions/rossmann-store-sales/data) and place the files in the `data/` folder to run the project.
 
 ## Modeling Approach
 
