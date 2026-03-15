@@ -27,7 +27,7 @@ Key steps:
 
 Missing competition and promotion information is represented with explicit indicator flags, so the model can learn the effect of unknown values rather than losing those rows.
 
-**Dataset:** Download the Kaggle dataset [here](https://www.kaggle.com/competitions/rossmann-store-sales/data) and place the files in the `data/` folder to run the project.
+**Dataset:** Download the Kaggle dataset [here](https://www.kaggle.com/competitions/rossmann-store-sales/data) and place the files in the `data/` folder (`train.csv`, `test.csv`, `store.csv`).
 
 ## Modeling Approach
 
