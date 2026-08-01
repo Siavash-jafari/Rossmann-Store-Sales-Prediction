@@ -40,7 +40,14 @@ To respect the time structure and avoid leakage, the dataset is split chronologi
 - Training period: 2013‑01‑01 to 2015‑06‑18  
 - Validation period: 2015‑06‑19 to 2015‑07‑31  
 
-The model is evaluated using Root Mean Squared Error (RMSE) on the validation period and achieves a validation RMSE of approximately **1028.08**.  
+### Evaluation Metrics
+
+Model performance is assessed on the validation period using three complementary metrics rather than RMSE alone:
+
+- **RMSE (Root Mean Squared Error):** ≈ **1028.08** — penalizes large errors more heavily, but is dominated by high-volume stores and is harder to interpret in isolation.
+- **MAE (Mean Absolute Error):** ≈ **553.54** — the average absolute error in raw sales units, giving a more intuitive, scale-robust sense of typical prediction error.
+- **RMSPE (Root Mean Squared Percentage Error):** ≈ **0.128** — the official metric used to score the original Kaggle competition. Closed-store days (`Sales == 0`) are excluded to avoid division by zero, matching the competition's own scoring methodology. This makes the result directly comparable to published Kaggle leaderboard scores for this dataset.
+
 After evaluation, the model is retrained on the full history (train + validation) before forecasting the test period.
 
 ## Forecasting Pipeline
